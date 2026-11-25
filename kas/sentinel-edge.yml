@@ -1,0 +1,46 @@
+
+header:
+  version: 14
+
+machine: qemux86-64
+distro: sentinel-edge
+
+target:
+  - core-image-minimal
+
+repos:
+  openembedded-core:
+    url: https://git.openembedded.org/openembedded-core
+    branch: scarthgap
+    layers:
+      meta:
+
+  bitbake:
+    url: https://git.openembedded.org/bitbake
+    branch: "2.8"
+    layers:
+      .: disabled
+
+  meta-openembedded:
+    url: https://github.com/openembedded/meta-openembedded.git
+    branch: scarthgap
+    layers:
+      meta-oe:
+      meta-python:
+
+  meta-qt6:
+    url: https://code.qt.io/yocto/meta-qt6.git
+    branch: "6.8"
+    layers:
+      .:
+
+  meta-sentinel-edge:
+    path: meta-sentinel-edge
+    layers:
+      .:
+
+local_conf_header:
+  sentinel-edge: |
+    PACKAGE_CLASSES = "package_ipk"
+    IMAGE_ROOTFS_EXTRA_SPACE = "524288"
+    IMAGE_INSTALL:append = " industrial-data-acquisition sentinel-edge-ui fontconfig ttf-dejavu-sans"

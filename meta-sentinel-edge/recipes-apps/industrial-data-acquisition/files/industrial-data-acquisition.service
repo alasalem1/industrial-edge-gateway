@@ -1,0 +1,19 @@
+[Unit]
+Description=SentinelEdge Industrial Data Acquisition
+After=local-fs.target
+Before=sentinel-edge-ui.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/industrial-data-acquisition
+Restart=always
+RestartSec=2
+
+RuntimeDirectory=sentinel-edge
+RuntimeDirectoryMode=0755
+
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

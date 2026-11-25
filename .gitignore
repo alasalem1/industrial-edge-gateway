@@ -1,0 +1,33 @@
+# Yocto build output
+/build/
+/tmp/
+*.lock
+
+# External Yocto source repositories (retrieved by KAS)
+/bitbake/
+/openembedded-core/
+/meta-openembedded/
+/meta-qt6/
+
+# Local development state
+.kas_shell_history
+/migration-backup/
+.migration-backup/
+
+# Qt build output
+/sentinel-edge-ui/build/
+
+# Nested Git metadata (main repository owns the project)
+/sentinel-edge-ui/.git/
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.tmp
+*.log
+
+# Local recovery copies
+/meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/backup-before-sync/
+/sentinel-edge-ui/qml/*.before-*
+/sentinel-edge-ui/qml/*.pre-*
