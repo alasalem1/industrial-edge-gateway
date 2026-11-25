@@ -21,6 +21,8 @@ qt_add_executable(sentinel-edge-ui
     src/system/SystemMonitor.h
     src/telemetry/TelemetryMonitor.cpp
     src/telemetry/TelemetryMonitor.h
+    src/faults/FaultManager.cpp
+    src/faults/FaultManager.h
     src/diagnostics/diagnostic_engine.c
     src/diagnostics/diagnostic_engine.h
 )

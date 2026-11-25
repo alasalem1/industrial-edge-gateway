@@ -5,6 +5,7 @@
 
 #include "system/SystemMonitor.h"
 #include "telemetry/TelemetryMonitor.h"
+#include "faults/FaultManager.h"
 
 int main(int argc, char *argv[])
 {
@@ -15,6 +16,25 @@ int main(int argc, char *argv[])
 
     SystemMonitor systemMonitor;
     TelemetryMonitor telemetryMonitor;
+    FaultManager faultManager;
+
+    QObject::connect(
+        &telemetryMonitor,
+        &TelemetryMonitor::telemetryUpdated,
+        &faultManager,
+        [&telemetryMonitor, &faultManager]() {
+            faultManager.processTelemetry(
+                telemetryMonitor.connected(),
+                telemetryMonitor.faultMask(),
+                telemetryMonitor.diagnosticStatus(),
+                telemetryMonitor.diagnosticSummary());
+        });
+
+    faultManager.processTelemetry(
+        telemetryMonitor.connected(),
+        telemetryMonitor.faultMask(),
+        telemetryMonitor.diagnosticStatus(),
+        telemetryMonitor.diagnosticSummary());
 
     QQmlApplicationEngine engine;
     engine.addImportPath(QStringLiteral("qrc:/"));
@@ -27,6 +47,11 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty(
         "telemetryMonitor",
         &telemetryMonitor
+    );
+
+    engine.rootContext()->setContextProperty(
+        "faultManager",
+        &faultManager
     );
 
     const QUrl mainUrl(QStringLiteral("qrc:/SentinelEdge/Main.qml"));

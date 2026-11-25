@@ -70,6 +70,11 @@ QString TelemetryMonitor::diagnosticSummary() const
     return m_diagnosticSummary;
 }
 
+int TelemetryMonitor::faultMask() const
+{
+    return m_faultMask;
+}
+
 void TelemetryMonitor::setUnavailable(const QString &status)
 {
     const bool changed =
@@ -85,6 +90,7 @@ void TelemetryMonitor::setUnavailable(const QString &status)
 
     m_diagnosticStatus = "UNKNOWN";
     m_diagnosticSummary = "Waiting for valid telemetry";
+    m_faultMask = 0;
 
     if (changed)
         emit telemetryUpdated();
@@ -187,11 +193,14 @@ void TelemetryMonitor::readTelemetry()
     DiagnosticResult result = {};
 
     if (diagnostic_evaluate(&input, &result) != 0) {
+        m_faultMask = 0;
         m_diagnosticStatus = "UNKNOWN";
         m_diagnosticSummary = "Diagnostic evaluation failed";
         emit telemetryUpdated();
         return;
     }
+
+    m_faultMask = static_cast<int>(result.faults);
 
     switch (result.severity) {
     case DIAGNOSTIC_NORMAL:

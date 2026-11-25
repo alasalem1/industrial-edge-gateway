@@ -1244,6 +1244,7 @@ ApplicationWindow {
                     ColumnLayout {
                         visible: activePage === "Incidents"
                         Layout.fillWidth: true
+                        Layout.fillHeight: true
                         Layout.margins: 18
                         spacing: 13
 
@@ -1255,49 +1256,188 @@ ApplicationWindow {
                         }
 
                         Text {
-                            text: "Recorded machine events and diagnostic history"
+                            text: "Persistent machine fault history and acknowledgment"
                             color: mutedColor
                             font.pixelSize: 10
                         }
 
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: 3
+                            columnSpacing: 10
+
+                            Repeater {
+                                model: [
+                                    { label: "ACTIVE FAULTS", value: faultManager.activeFaultCount, color: dangerColor },
+                                    { label: "NEEDS ACKNOWLEDGMENT", value: faultManager.unacknowledgedCount, color: warningColor },
+                                    { label: "RECORDED EVENTS", value: faultManager.events.length, color: accentColor }
+                                ]
+
+                                delegate: Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 76
+                                    radius: 7
+                                    color: panelColor
+                                    border.color: borderColor
+
+                                    ColumnLayout {
+                                        anchors.fill: parent
+                                        anchors.margins: 10
+                                        spacing: 5
+
+                                        Text {
+                                            text: modelData.label
+                                            color: mutedColor
+                                            font.pixelSize: 8
+                                            font.bold: true
+                                            wrapMode: Text.WordWrap
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            text: modelData.value
+                                            color: modelData.color
+                                            font.pixelSize: 22
+                                            font.bold: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "Storage: " + faultManager.storageStatus
+                                color: mutedColor
+                                font.pixelSize: 9
+                                Layout.fillWidth: true
+                            }
+
+                            Button {
+                                text: "Acknowledge all"
+                                enabled: faultManager.unacknowledgedCount > 0
+                                onClicked: faultManager.acknowledgeAll()
+                            }
+                        }
+
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 190
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: 180
                             radius: 7
                             color: panelColor
                             border.color: borderColor
+                            clip: true
 
-                            ColumnLayout {
-                                anchors.centerIn: parent
-                                spacing: 9
+                            ListView {
+                                id: incidentList
+                                anchors.fill: parent
+                                anchors.margins: 10
+                                spacing: 8
+                                clip: true
+                                model: faultManager.events
 
-                                Text {
-                                    text: "—"
-                                    color: mutedColor
-                                    font.pixelSize: 30
-                                    horizontalAlignment: Text.AlignHCenter
-                                    Layout.alignment: Qt.AlignHCenter
+                                ScrollBar.vertical: ScrollBar {}
+
+                                delegate: Rectangle {
+                                    required property var modelData
+
+                                    width: incidentList.width
+                                    height: incidentContent.implicitHeight + 22
+                                    radius: 6
+                                    color: panelAltColor
+                                    border.color: borderColor
+
+                                    ColumnLayout {
+                                        id: incidentContent
+                                        anchors.fill: parent
+                                        anchors.margins: 11
+                                        spacing: 7
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+                                            spacing: 8
+
+                                            Text {
+                                                text: modelData.title || "Unknown fault"
+                                                color: textColor
+                                                font.pixelSize: 12
+                                                font.bold: true
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Text {
+                                                text: modelData.severity || "UNKNOWN"
+                                                color: modelData.severity === "CRITICAL"
+                                                       ? dangerColor
+                                                       : modelData.severity === "WARNING"
+                                                         ? warningColor : mutedColor
+                                                font.pixelSize: 9
+                                                font.bold: true
+                                            }
+                                        }
+
+                                        Text {
+                                            text: modelData.message || "No diagnostic details"
+                                            color: secondaryTextColor
+                                            font.pixelSize: 9
+                                            wrapMode: Text.WordWrap
+                                            Layout.fillWidth: true
+                                        }
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+
+                                            Text {
+                                                text: "Detected: " + (modelData.timestamp || "Unknown")
+                                                color: mutedColor
+                                                font.pixelSize: 8
+                                                Layout.fillWidth: true
+                                                wrapMode: Text.WrapAnywhere
+                                            }
+
+                                            Text {
+                                                text: modelData.active
+                                                      ? (modelData.acknowledged ? "ACKNOWLEDGED" : "ACTIVE")
+                                                      : "CLEARED"
+                                                color: modelData.active
+                                                       ? (modelData.acknowledged ? accentColor : warningColor)
+                                                       : goodStatusColor
+                                                font.pixelSize: 8
+                                                font.bold: true
+                                            }
+                                        }
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Button {
+                                                text: "Acknowledge"
+                                                visible: modelData.active && !modelData.acknowledged
+                                                onClicked: faultManager.acknowledge(modelData.id)
+                                            }
+                                        }
+                                    }
                                 }
 
                                 Text {
-                                    text: "No incidents recorded"
-                                    color: textColor
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    Layout.alignment: Qt.AlignHCenter
-                                }
-
-                                Text {
-                                    text: "The incident recorder has not been integrated yet."
+                                    anchors.centerIn: parent
+                                    visible: incidentList.count === 0
+                                    text: "No incidents recorded yet"
                                     color: mutedColor
-                                    font.pixelSize: 9
-                                    Layout.alignment: Qt.AlignHCenter
+                                    font.pixelSize: 12
                                 }
                             }
                         }
                     }
 
-                    // =================================================
                     // MODEL MANAGEMENT
                     // =================================================
 

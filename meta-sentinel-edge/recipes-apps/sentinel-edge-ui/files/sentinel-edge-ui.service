@@ -1,0 +1,16 @@
+[Unit]
+Description=SentinelEdge Qt Dashboard
+After=systemd-user-sessions.service industrial-data-acquisition.service
+Wants=industrial-data-acquisition.service
+
+[Service]
+Type=simple
+Environment="QT_QPA_PLATFORM=vnc:size=900x650:port=5900:host=0.0.0.0"
+ExecStart=/usr/bin/sentinel-edge-ui
+Restart=on-failure
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

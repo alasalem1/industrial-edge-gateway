@@ -31,3 +31,9 @@
 /meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/backup-before-sync/
 /sentinel-edge-ui/qml/*.before-*
 /sentinel-edge-ui/qml/*.pre-*
+
+# QML recovery and design backups
+/meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.backup
+/meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.before-*
+/meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.pre-*
+/meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.theme-backup
