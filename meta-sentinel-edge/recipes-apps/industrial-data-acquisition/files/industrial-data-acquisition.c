@@ -1,5 +1,7 @@
 #define _POSIX_C_SOURCE 200809L
 
+#include "sensor_backend.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +11,6 @@
 #include <sys/stat.h>
 
 #define DEFAULT_OUTPUT "/run/sentinel-edge/telemetry.json"
-#define SOURCE_NAME "SIMULATED-C-ACQUISITION"
 
 #define TEMP_LIMIT 80.0
 #define PRESSURE_LIMIT 10.0
@@ -36,10 +37,7 @@ static int create_parent_directory(const char *path)
 
     char *separator = strrchr(directory, '/');
 
-    if (separator == NULL)
-        return 0;
-
-    if (separator == directory)
+    if (separator == NULL || separator == directory)
         return 0;
 
     *separator = '\0';
@@ -54,10 +52,7 @@ static int create_parent_directory(const char *path)
 
 static int publish_telemetry(
     const char *output_path,
-    double temperature,
-    double pressure,
-    double vibration,
-    int motor_rpm)
+    const SensorReading *reading)
 {
     char temporary_path[1100];
 
@@ -94,11 +89,11 @@ static int publish_telemetry(
         "  \"motor_rpm\": %d\n"
         "}\n",
         timestamp,
-        SOURCE_NAME,
-        temperature,
-        pressure,
-        vibration,
-        motor_rpm
+        sensor_backend_name(),
+        reading->temperature_c,
+        reading->pressure_bar,
+        reading->vibration_mm_s,
+        reading->motor_rpm
     );
 
     if (result < 0 || fflush(file) != 0 ||
@@ -137,25 +132,26 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    srand((unsigned int)time(NULL));
+    if (sensor_backend_init() != 0) {
+        fprintf(stderr, "Sensor backend initialization failed\n");
+        return EXIT_FAILURE;
+    }
 
     printf("SentinelEdge Industrial Data Acquisition\n");
-    printf("Source: %s\n", SOURCE_NAME);
+    printf("Source: %s\n", sensor_backend_name());
     printf("Output: %s\n", output_path);
     printf("Publishing interval: 2 seconds\n");
 
     while (1) {
-        double temperature = 30.0 + (rand() % 451) / 10.0;
-        double pressure = 2.0 + (rand() % 61) / 10.0;
-        double vibration = 0.2 + (rand() % 49) / 10.0;
-        int motor_rpm = 900 + (rand() % 901);
+        SensorReading reading;
 
-        if (publish_telemetry(
-                output_path,
-                temperature,
-                pressure,
-                vibration,
-                motor_rpm) != 0) {
+        if (sensor_backend_read(&reading) != 0) {
+            perror("Sensor acquisition failed");
+            sleep(2);
+            continue;
+        }
+
+        if (publish_telemetry(output_path, &reading) != 0) {
             fprintf(stderr, "Failed to publish telemetry\n");
         } else {
             printf(
@@ -163,17 +159,17 @@ int main(void)
                 "Pressure: %.1f bar | "
                 "Vibration: %.1f mm/s | "
                 "Motor: %d RPM\n",
-                temperature,
-                pressure,
-                vibration,
-                motor_rpm
+                reading.temperature_c,
+                reading.pressure_bar,
+                reading.vibration_mm_s,
+                reading.motor_rpm
             );
         }
 
-        if (temperature > TEMP_LIMIT)
+        if (reading.temperature_c > TEMP_LIMIT)
             printf("ALARM: High temperature!\n");
 
-        if (pressure > PRESSURE_LIMIT)
+        if (reading.pressure_bar > PRESSURE_LIMIT)
             printf("ALARM: High pressure!\n");
 
         sleep(2);

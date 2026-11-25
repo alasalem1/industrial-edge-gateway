@@ -1,8 +1,10 @@
 SUMMARY = "SentinelEdge Industrial Data Acquisition"
-DESCRIPTION = "Industrial telemetry acquisition and JSON publishing service"
+DESCRIPTION = "Modular industrial telemetry acquisition and JSON publishing service"
 LICENSE = "CLOSED"
 
 SRC_URI = "file://industrial-data-acquisition.c \
+           file://sensor_backend.h \
+           file://sensor_backend_simulation.c \
            file://industrial-data-acquisition.service \
 "
 
@@ -15,7 +17,9 @@ SYSTEMD_AUTO_ENABLE:${PN} = "enable"
 
 do_compile() {
     ${CC} ${CFLAGS} ${LDFLAGS} \
+        -I${WORKDIR} \
         ${WORKDIR}/industrial-data-acquisition.c \
+        ${WORKDIR}/sensor_backend_simulation.c \
         -o industrial-data-acquisition
 }
 

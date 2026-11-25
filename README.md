@@ -13,17 +13,24 @@ SentinelEdge runs as a custom Yocto Linux image targeting QEMU x86-64.
 **Hardware status:** Industrial measurements are simulated; no physical sensors are connected.
 **AI status:** The diagnostics interface exists, but no inference model is currently loaded.
 ## Architecture
-The platform connects Linux system monitoring and simulated industrial acquisition through local C++ monitoring services and a Qt 6/QML dashboard.
+The platform separates sensor acquisition from telemetry publishing through a modular C backend interface. The current QEMU implementation uses a simulated sensor backend. Published JSON telemetry is consumed by the C++ monitoring layer and Qt 6/QML dashboard.
+
 ```text
-Industrial acquisition (C)
-          |
-    Local JSON file
-          |
-C++ TelemetryMonitor ---- C++ SystemMonitor (/proc)
-          |
-      Qt 6 / QML
-          |
- SentinelEdge Dashboard
+       Sensor Backend Interface (C)
+                   |
+          Simulation Backend
+                   |
+       Industrial Data Acquisition
+                   |
+          JSON Telemetry Publisher
+                   |
+       /run/sentinel-edge/telemetry.json
+                   |
+          C++ TelemetryMonitor
+                   |
+C++ SystemMonitor (/proc) ---- Qt 6 / QML
+                                      |
+                            SentinelEdge Dashboard
 ```
 
 ## Repository structure
@@ -144,24 +151,17 @@ Connect a VNC viewer to `127.0.0.1::5901` from the host.
 
 The platform has been built and tested in the QEMU x86-64 environment.
 
-
-
-- Successful Yocto image build.
-
-- Successful application recipe builds.
-
+- Successful Yocto image and acquisition recipe builds.
+- Modular C sensor backend interface and simulation backend compiled successfully.
+- Acquisition package verified in the generated image manifest.
 - QEMU boot and Linux userspace startup.
-
-- systemd acquisition service startup.
-
-- Continuous generation of telemetry JSON data.
-
-- Verification of changing telemetry values.
-
+- systemd acquisition service startup and enabled state verified.
+- Continuous JSON telemetry publishing with changing timestamps and simulated measurements.
+- Manual service stop/start recovery verified.
+- Automatic systemd recovery after forced process termination (`SIGKILL`) verified.
+- New process PID and telemetry publishing confirmed after automatic restart.
 - Linux CPU and memory monitoring.
-
 - Qt dashboard startup through VNC.
-
 - Telemetry connection and display in the dashboard.
 
 
@@ -171,30 +171,19 @@ The platform has been built and tested in the QEMU x86-64 environment.
 
 
 | Component | Status |
-
 |---|---|
-
 | Yocto distribution and custom layer | Implemented |
-
 | KAS build environment | Implemented |
-
 | C acquisition service | Implemented |
-
+| Modular sensor backend interface | Implemented |
+| Simulation sensor backend | Implemented |
 | JSON telemetry pipeline | Implemented |
-
 | C++ system monitoring | Implemented |
-
 | Telemetry validation | Implemented |
-
 | Qt 6/QML dashboard | Implemented |
-
 | QEMU integration | Tested |
-
 | Physical sensor integration | Planned |
-
 | AI inference integration | Planned |
-
-
 
 ## Limitations
 
