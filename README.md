@@ -214,7 +214,7 @@ gcc -Wall -Wextra -Werror -std=c11 -Isentinel-edge-ui/src/diagnostics tests/test
 
 The suite covers normal operation, all warning and critical threshold boundaries, simultaneous faults, severity priority, and null-pointer handling.
 
-**Latest result:** 14 tests passed, 0 failed.
+**Latest results:** 14 diagnostic tests + 23 simulator tests = **37 passed, 0 failed**.
 
 ## Limitations
 
@@ -241,3 +241,7 @@ SentinelEdge explores the development of a complete embedded Linux edge platform
 
 
 **SentinelEdge — Local intelligence. Embedded control. Industrial visibility.**
+
+## Persistent fault management
+
+The Qt application records fault events in `/var/lib/sentinel-edge/fault-history.json`. The fault manager tracks active and cleared states, acknowledgement status, and event timestamps. QEMU validation covered all four simulated fault profiles and recovery to normal measurements.
