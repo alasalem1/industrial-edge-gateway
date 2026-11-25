@@ -21,6 +21,9 @@ class TelemetryMonitor : public QObject
     Q_PROPERTY(QString diagnosticStatus READ diagnosticStatus NOTIFY telemetryUpdated)
     Q_PROPERTY(QString diagnosticSummary READ diagnosticSummary NOTIFY telemetryUpdated)
     Q_PROPERTY(int faultMask READ faultMask NOTIFY telemetryUpdated)
+    Q_PROPERTY(QString aiStatus READ aiStatus NOTIFY telemetryUpdated)
+    Q_PROPERTY(QString aiSummary READ aiSummary NOTIFY telemetryUpdated)
+    Q_PROPERTY(double aiAnomalyScore READ aiAnomalyScore NOTIFY telemetryUpdated)
 
 public:
     explicit TelemetryMonitor(QObject *parent = nullptr);
@@ -37,6 +40,9 @@ public:
     QString diagnosticStatus() const;
     QString diagnosticSummary() const;
     int faultMask() const;
+    QString aiStatus() const;
+    QString aiSummary() const;
+    double aiAnomalyScore() const;
 
 signals:
     void telemetryUpdated();
@@ -63,6 +69,9 @@ private:
     double m_vibration = 0.0;
     int m_motorRpm = 0;
     int m_faultMask = 0;
+    QString m_aiStatus = "UNKNOWN";
+    QString m_aiSummary = "Waiting for valid telemetry";
+    double m_aiAnomalyScore = 0.0;
 };
 
 #endif

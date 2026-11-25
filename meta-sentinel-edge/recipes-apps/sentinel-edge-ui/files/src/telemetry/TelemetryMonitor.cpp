@@ -1,6 +1,7 @@
 #include "TelemetryMonitor.h"
 
 #include "diagnostics/diagnostic_engine.h"
+#include "ml/anomaly_detector.h"
 
 #include <QDateTime>
 #include <QFile>
@@ -75,6 +76,21 @@ int TelemetryMonitor::faultMask() const
     return m_faultMask;
 }
 
+QString TelemetryMonitor::aiStatus() const
+{
+    return m_aiStatus;
+}
+
+QString TelemetryMonitor::aiSummary() const
+{
+    return m_aiSummary;
+}
+
+double TelemetryMonitor::aiAnomalyScore() const
+{
+    return m_aiAnomalyScore;
+}
+
 void TelemetryMonitor::setUnavailable(const QString &status)
 {
     const bool changed =
@@ -82,7 +98,9 @@ void TelemetryMonitor::setUnavailable(const QString &status)
         m_status != status ||
         m_source != "None" ||
         m_diagnosticStatus != "UNKNOWN" ||
-        m_diagnosticSummary != "Waiting for valid telemetry";
+        m_diagnosticSummary != "Waiting for valid telemetry" ||
+        m_aiStatus != "UNKNOWN" ||
+        m_aiSummary != "Waiting for valid telemetry";
 
     m_connected = false;
     m_status = status;
@@ -91,6 +109,9 @@ void TelemetryMonitor::setUnavailable(const QString &status)
     m_diagnosticStatus = "UNKNOWN";
     m_diagnosticSummary = "Waiting for valid telemetry";
     m_faultMask = 0;
+    m_aiStatus = "UNKNOWN";
+    m_aiSummary = "Waiting for valid telemetry";
+    m_aiAnomalyScore = 0.0;
 
     if (changed)
         emit telemetryUpdated();
@@ -182,6 +203,30 @@ void TelemetryMonitor::readTelemetry()
     m_pressure = pressure;
     m_vibration = vibration;
     m_motorRpm = static_cast<int>(rpm);
+
+    const double aiFeatures[SENTINEL_AI_FEATURE_COUNT] = {
+        m_temperature,
+        m_pressure,
+        m_vibration,
+        static_cast<double>(m_motorRpm)
+    };
+
+    double aiScore = 0.0;
+    const int aiResult = sentinel_ai_predict(aiFeatures, &aiScore);
+
+    if (aiResult >= 0) {
+        m_aiAnomalyScore = aiScore;
+        m_aiStatus = aiResult == 1 ? "ANOMALY" : "NORMAL";
+        m_aiSummary = QString("%1 (score: %2)")
+            .arg(aiResult == 1
+                ? "Unusual sensor pattern detected"
+                : "No unusual pattern detected")
+            .arg(aiScore, 0, 'f', 4);
+    } else {
+        m_aiStatus = "ERROR";
+        m_aiSummary = "ML inference failed";
+        m_aiAnomalyScore = 0.0;
+    }
 
     DiagnosticInput input = {
         m_temperature,

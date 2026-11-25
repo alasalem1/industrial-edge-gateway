@@ -787,7 +787,7 @@ ApplicationWindow {
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 190
+                                Layout.preferredHeight: 290
                                 radius: 8
                                 color: Theme.panel
                                 border.color: Theme.border
@@ -846,6 +846,62 @@ ApplicationWindow {
 
                                     Text {
                                         text: telemetryMonitor.diagnosticSummary
+                                        color: Theme.textPrimary
+                                        font.pixelSize: 12
+                                        wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Item {
+                                        Layout.fillHeight: true
+                                    }
+
+                                    Text {
+                                        text: "ML ANOMALY DETECTION"
+                                        color: Theme.textSecondary
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        Layout.preferredHeight: 32
+                                        radius: 6
+
+                                        property string statusKind:
+                                            telemetryMonitor.aiStatus === "NORMAL" ? "live" :
+                                            telemetryMonitor.aiStatus === "ANOMALY" ? "danger" :
+                                            "neutral"
+
+                                        color: Theme.statusSoftColor(statusKind)
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 10
+                                            anchors.rightMargin: 10
+
+                                            Text {
+                                                text: telemetryMonitor.aiStatus
+                                                color: Theme.statusColor(parent.parent.statusKind)
+                                                font.pixelSize: 13
+                                                font.bold: true
+                                            }
+
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Text {
+                                                text: "ISOLATION FOREST / C INFERENCE"
+                                                color: Theme.textMuted
+                                                font.pixelSize: 9
+                                                font.bold: true
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        text: telemetryMonitor.aiSummary
                                         color: Theme.textPrimary
                                         font.pixelSize: 12
                                         wrapMode: Text.WordWrap
@@ -1046,7 +1102,7 @@ ApplicationWindow {
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 155
+                            Layout.preferredHeight: 175
                             radius: 7
                             color: panelColor
                             border.color: borderColor
@@ -1064,14 +1120,18 @@ ApplicationWindow {
                                 }
 
                                 Text {
-                                    text: "Not connected"
-                                    color: warningColor
+                                    text: telemetryMonitor.aiStatus
+                                    color: telemetryMonitor.aiStatus === "ANOMALY" ? dangerColor :
+                                           telemetryMonitor.aiStatus === "NORMAL" ? Theme.statusColor("live") :
+                                           warningColor
                                     font.pixelSize: 18
                                     font.bold: true
                                 }
 
                                 Text {
-                                    text: "Inference service integration is pending. No anomaly score or diagnosis is currently being generated."
+                                    text: telemetryMonitor.connected
+                                          ? "Connected to local Isolation Forest inference running in native C."
+                                          : "Waiting for valid sensor telemetry."
                                     color: mutedColor
                                     font.pixelSize: 10
                                     wrapMode: Text.WordWrap
@@ -1100,14 +1160,19 @@ ApplicationWindow {
                                 }
 
                                 Text {
-                                    text: "No diagnostic results"
+                                    text: telemetryMonitor.aiStatus === "ANOMALY"
+                                      ? "ANOMALY DETECTED"
+                                      : telemetryMonitor.aiStatus === "NORMAL"
+                                      ? "NO ANOMALY DETECTED"
+                                      : telemetryMonitor.aiStatus
                                     color: textColor
                                     font.pixelSize: 13
                                     font.bold: true
                                 }
 
                                 Text {
-                                    text: "Waiting for the Edge AI engine."
+                                    text: telemetryMonitor.aiSummary
+                                    wrapMode: Text.WordWrap
                                     color: mutedColor
                                     font.pixelSize: 9
                                 }

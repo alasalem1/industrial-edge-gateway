@@ -25,6 +25,9 @@ qt_add_executable(sentinel-edge-ui
     src/faults/FaultManager.h
     src/diagnostics/diagnostic_engine.c
     src/diagnostics/diagnostic_engine.h
+    src/ml/anomaly_detector.c
+    src/ml/anomaly_detector.h
+    src/ml/isolation_forest_model.h
 )
 
 target_include_directories(sentinel-edge-ui

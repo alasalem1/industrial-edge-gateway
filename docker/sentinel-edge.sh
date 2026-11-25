@@ -21,7 +21,7 @@ KAS_IMAGE="ghcr.io/siemens/kas/kas:5.5"
 KAS_CONFIG="kas/sentinel-edge.yml"
 
 CONTAINER_WORKDIR="/work"
-VNC_PORT="5901"
+VNC_PORT="5904"
 
 # ------------------------------------------------------------
 # Terminal colors
@@ -83,7 +83,7 @@ Examples:
 QEMU:
     After entering the QEMU KAS shell, run:
 
-    export QB_SLIRP_OPT="-netdev user,id=net0,hostfwd=tcp:0.0.0.0:${VNC_PORT}-:5900,hostfwd=tcp:127.0.0.1:2222-:22"
+    export QB_SLIRP_OPT="-netdev user,id=net0,hostfwd=tcp:0.0.0.0:${VNC_PORT}-:5900,hostfwd=tcp:127.0.0.1:2225-:22"
 
     runqemu qemux86-64 nographic slirp
 
@@ -213,7 +213,7 @@ run_kas_qemu() {
     echo
     echo "After the KAS shell opens, run these commands:"
     echo
-    echo "export QB_SLIRP_OPT=\"-netdev user,id=net0,hostfwd=tcp:0.0.0.0:${VNC_PORT}-:5900,hostfwd=tcp:127.0.0.1:2222-:22\""
+    echo "export QB_SLIRP_OPT=\"-netdev user,id=net0,hostfwd=tcp:0.0.0.0:${VNC_PORT}-:5900,hostfwd=tcp:127.0.0.1:2225-:22\""
     echo
     echo "runqemu qemux86-64 nographic slirp"
     echo
