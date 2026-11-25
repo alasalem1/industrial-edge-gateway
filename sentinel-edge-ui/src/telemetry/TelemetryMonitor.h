@@ -18,6 +18,9 @@ class TelemetryMonitor : public QObject
     Q_PROPERTY(double vibration READ vibration NOTIFY telemetryUpdated)
     Q_PROPERTY(int motorRpm READ motorRpm NOTIFY telemetryUpdated)
 
+    Q_PROPERTY(QString diagnosticStatus READ diagnosticStatus NOTIFY telemetryUpdated)
+    Q_PROPERTY(QString diagnosticSummary READ diagnosticSummary NOTIFY telemetryUpdated)
+
 public:
     explicit TelemetryMonitor(QObject *parent = nullptr);
 
@@ -29,6 +32,9 @@ public:
     double pressure() const;
     double vibration() const;
     int motorRpm() const;
+
+    QString diagnosticStatus() const;
+    QString diagnosticSummary() const;
 
 signals:
     void telemetryUpdated();
@@ -44,6 +50,9 @@ private:
     QString m_filePath;
     QString m_status = "NOT CONNECTED";
     QString m_source = "None";
+
+    QString m_diagnosticStatus = "UNKNOWN";
+    QString m_diagnosticSummary = "Waiting for valid telemetry";
 
     bool m_connected = false;
 

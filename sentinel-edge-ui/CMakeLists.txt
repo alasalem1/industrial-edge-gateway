@@ -2,8 +2,11 @@ cmake_minimum_required(VERSION 3.16)
 
 project(SentinelEdgeControlCenter
     VERSION 0.1
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,6 +21,13 @@ qt_add_executable(sentinel-edge-ui
     src/system/SystemMonitor.h
     src/telemetry/TelemetryMonitor.cpp
     src/telemetry/TelemetryMonitor.h
+    src/diagnostics/diagnostic_engine.c
+    src/diagnostics/diagnostic_engine.h
+)
+
+target_include_directories(sentinel-edge-ui
+    PRIVATE
+        src
 )
 
 # --- QML sources -------------------------------------------------------

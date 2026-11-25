@@ -1,10 +1,13 @@
 #include "TelemetryMonitor.h"
 
+#include "diagnostics/diagnostic_engine.h"
+
 #include <QDateTime>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QVariant>
+#include <QStringList>
 
 TelemetryMonitor::TelemetryMonitor(QObject *parent)
     : QObject(parent)
@@ -57,16 +60,31 @@ int TelemetryMonitor::motorRpm() const
     return m_motorRpm;
 }
 
+QString TelemetryMonitor::diagnosticStatus() const
+{
+    return m_diagnosticStatus;
+}
+
+QString TelemetryMonitor::diagnosticSummary() const
+{
+    return m_diagnosticSummary;
+}
+
 void TelemetryMonitor::setUnavailable(const QString &status)
 {
     const bool changed =
         m_connected ||
         m_status != status ||
-        m_source != "None";
+        m_source != "None" ||
+        m_diagnosticStatus != "UNKNOWN" ||
+        m_diagnosticSummary != "Waiting for valid telemetry";
 
     m_connected = false;
     m_status = status;
     m_source = "None";
+
+    m_diagnosticStatus = "UNKNOWN";
+    m_diagnosticSummary = "Waiting for valid telemetry";
 
     if (changed)
         emit telemetryUpdated();
@@ -158,6 +176,58 @@ void TelemetryMonitor::readTelemetry()
     m_pressure = pressure;
     m_vibration = vibration;
     m_motorRpm = static_cast<int>(rpm);
+
+    DiagnosticInput input = {
+        m_temperature,
+        m_pressure,
+        m_vibration,
+        m_motorRpm
+    };
+
+    DiagnosticResult result = {};
+
+    if (diagnostic_evaluate(&input, &result) != 0) {
+        m_diagnosticStatus = "UNKNOWN";
+        m_diagnosticSummary = "Diagnostic evaluation failed";
+        emit telemetryUpdated();
+        return;
+    }
+
+    switch (result.severity) {
+    case DIAGNOSTIC_NORMAL:
+        m_diagnosticStatus = "NORMAL";
+        break;
+
+    case DIAGNOSTIC_WARNING:
+        m_diagnosticStatus = "WARNING";
+        break;
+
+    case DIAGNOSTIC_CRITICAL:
+        m_diagnosticStatus = "CRITICAL";
+        break;
+
+    default:
+        m_diagnosticStatus = "UNKNOWN";
+        break;
+    }
+
+    QStringList faults;
+
+    if (result.faults & FAULT_TEMPERATURE)
+        faults << "High temperature";
+
+    if (result.faults & FAULT_PRESSURE)
+        faults << "High pressure";
+
+    if (result.faults & FAULT_VIBRATION)
+        faults << "High vibration";
+
+    if (result.faults & FAULT_MOTOR_SPEED)
+        faults << "High motor speed";
+
+    m_diagnosticSummary = faults.isEmpty()
+        ? "No threshold violations"
+        : faults.join(" / ");
 
     emit telemetryUpdated();
 }

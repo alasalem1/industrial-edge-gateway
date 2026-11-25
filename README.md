@@ -1,6 +1,6 @@
 # SentinelEdge — Industrial Edge Monitoring Platform
 SentinelEdge is an embedded Linux industrial edge monitoring platform built with the Yocto Project.
-It combines a custom Linux distribution, a C-based telemetry acquisition service, a C++ system monitoring layer, and a Qt 6/QML operations dashboard.
+It combines a custom Linux distribution, a C-based telemetry acquisition service, a C++ system monitoring layer, a deterministic C rule-based diagnostic engine, and a Qt 6/QML operations dashboard.
 **Technology stack:** Yocto Scarthgap · KAS · BitBake · C · C++ · Qt 6 · QML · systemd
 ## Project overview
 SentinelEdge runs as a custom Yocto Linux image targeting QEMU x86-64.
@@ -10,8 +10,9 @@ SentinelEdge runs as a custom Yocto Linux image targeting QEMU x86-64.
 - C++ Linux CPU, memory, and uptime monitoring.
 - Qt 6/QML operations dashboard.
 - Telemetry range and freshness validation.
+- Deterministic C diagnostic engine with NORMAL, WARNING, and CRITICAL severity levels.
 **Hardware status:** Industrial measurements are simulated; no physical sensors are connected.
-**AI status:** The diagnostics interface exists, but no inference model is currently loaded.
+**Diagnostics status:** A deterministic C rule-based engine evaluates temperature, pressure, vibration, and motor speed. No AI/ML inference model is implemented.
 ## Architecture
 The platform separates sensor acquisition from telemetry publishing through a modular C backend interface. The current QEMU implementation uses a simulated sensor backend. Published JSON telemetry is consumed by the C++ monitoring layer and Qt 6/QML dashboard.
 
@@ -163,6 +164,8 @@ The platform has been built and tested in the QEMU x86-64 environment.
 - Linux CPU and memory monitoring.
 - Qt dashboard startup through VNC.
 - Telemetry connection and display in the dashboard.
+- Standalone C diagnostic-engine tests covering normal operation, warnings, multiple faults, and critical conditions.
+- Dashboard warning-state validation using manually supplied telemetry.
 
 
 
@@ -180,10 +183,38 @@ The platform has been built and tested in the QEMU x86-64 environment.
 | JSON telemetry pipeline | Implemented |
 | C++ system monitoring | Implemented |
 | Telemetry validation | Implemented |
+| C rule-based diagnostic engine | Implemented and tested |
 | Qt 6/QML dashboard | Implemented |
 | QEMU integration | Tested |
 | Physical sensor integration | Planned |
-| AI inference integration | Planned |
+| AI/ML inference integration | Planned |
+
+## Rule-based diagnostic thresholds
+
+The C diagnostic engine evaluates four simulated industrial measurements:
+
+| Measurement | Warning | Critical |
+|---|---:|---:|
+| Temperature | >= 65 °C | >= 72 °C |
+| Pressure | >= 7.0 bar | >= 7.8 bar |
+| Vibration | >= 4.0 mm/s | >= 4.8 mm/s |
+| Motor speed | >= 1650 RPM | >= 1780 RPM |
+
+The engine reports NORMAL, WARNING, or CRITICAL severity and a fault bitmask.
+These are demonstration thresholds, not certified industrial safety limits.
+
+## Diagnostic engine unit tests
+
+Compile and run the standalone C tests with GCC:
+
+```bash
+gcc -Wall -Wextra -Werror -std=c11 -Isentinel-edge-ui/src/diagnostics tests/test_diagnostic_engine.c sentinel-edge-ui/src/diagnostics/diagnostic_engine.c -o /tmp/test_diagnostic_engine
+/tmp/test_diagnostic_engine
+```
+
+The suite covers normal operation, all warning and critical threshold boundaries, simultaneous faults, severity priority, and null-pointer handling.
+
+**Latest result:** 14 tests passed, 0 failed.
 
 ## Limitations
 
@@ -191,7 +222,7 @@ The platform has been built and tested in the QEMU x86-64 environment.
 
 - Industrial measurements are simulated; physical sensor integration has not been performed.
 
-- AI diagnostics are currently a user-interface feature; no inference model is loaded.
+- Diagnostics currently use deterministic threshold-based C rules; AI/ML inference is not implemented.
 
 - Validation has been performed in QEMU, not on physical industrial hardware.
 

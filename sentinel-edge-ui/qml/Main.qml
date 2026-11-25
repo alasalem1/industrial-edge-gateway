@@ -783,11 +783,11 @@ ApplicationWindow {
                                 }
                             }
 
-                            // AI inference
+                            // Rule-based diagnostics
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: 145
+                                Layout.preferredHeight: 190
                                 radius: 8
                                 color: Theme.panel
                                 border.color: Theme.border
@@ -795,28 +795,59 @@ ApplicationWindow {
                                 ColumnLayout {
                                     anchors.fill: parent
                                     anchors.margins: 14
-                                    spacing: 8
+                                    spacing: 9
 
                                     Text {
-                                        text: "AI DIAGNOSTICS"
+                                        text: "RULE-BASED DIAGNOSTICS"
                                         color: Theme.textSecondary
                                         font.pixelSize: 11
                                         font.bold: true
                                     }
 
-                                    Text {
-                                        text: "Inference unavailable"
-                                        color: Theme.neutral
-                                        font.pixelSize: 16
-                                        font.bold: true
-                                        wrapMode: Text.WordWrap
+                                    Rectangle {
                                         Layout.fillWidth: true
+                                        Layout.preferredHeight: 32
+                                        radius: 6
+
+                                        property string statusKind:
+                                            telemetryMonitor.diagnosticStatus === "NORMAL" ? "live" :
+                                            telemetryMonitor.diagnosticStatus === "WARNING" ? "warning" :
+                                            telemetryMonitor.diagnosticStatus === "CRITICAL" ? "danger" :
+                                            "neutral"
+
+                                        color: Theme.statusSoftColor(statusKind)
+
+                                        RowLayout {
+                                            anchors.fill: parent
+                                            anchors.leftMargin: 10
+                                            anchors.rightMargin: 10
+
+                                            Text {
+                                                text: telemetryMonitor.diagnosticStatus
+                                                color: Theme.statusColor(parent.parent.statusKind)
+                                                font.pixelSize: 13
+                                                font.bold: true
+                                            }
+
+                                            Item {
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Text {
+                                                text: telemetryMonitor.connected
+                                                      ? "ENGINE ACTIVE"
+                                                      : "WAITING FOR DATA"
+                                                color: Theme.textMuted
+                                                font.pixelSize: 9
+                                                font.bold: true
+                                            }
+                                        }
                                     }
 
                                     Text {
-                                        text: "No inference model is loaded. Anomaly detection and local diagnosis are pending integration."
-                                        color: Theme.textMuted
-                                        font.pixelSize: 11
+                                        text: telemetryMonitor.diagnosticSummary
+                                        color: Theme.textPrimary
+                                        font.pixelSize: 12
                                         wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
@@ -826,13 +857,14 @@ ApplicationWindow {
                                     }
 
                                     Text {
-                                        text: "MODEL  /  NOT LOADED"
-                                        color: Theme.neutral
+                                        text: "ENGINE  /  C RULE EVALUATION"
+                                        color: Theme.textMuted
                                         font.pixelSize: 10
                                         font.bold: true
                                     }
                                 }
                             }
+
                         }
 
                         // Platform information
