@@ -1025,9 +1025,18 @@ ApplicationWindow {
                                 }
 
                                 Text {
-                                    text: telemetryMonitor.connected
-                                          ? "LIVE SIMULATED TELEMETRY"
-                                          : "WAITING FOR TELEMETRY"
+                                    text: {
+                                        if (!telemetryMonitor.connected)
+                                            return "WAITING FOR TELEMETRY"
+
+                                        if (telemetryMonitor.source === "MODBUS-TCP")
+                                            return "LIVE MODBUS TELEMETRY"
+
+                                        if (telemetryMonitor.source === "SIMULATED-C-ACQUISITION")
+                                            return "LIVE SIMULATED TELEMETRY"
+
+                                        return "LIVE INDUSTRIAL TELEMETRY"
+                                    }
                                     color: telemetryMonitor.connected ? textColor : warningColor
                                     font.pixelSize: 17
                                     font.bold: true

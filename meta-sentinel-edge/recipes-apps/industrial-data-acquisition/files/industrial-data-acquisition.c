@@ -15,6 +15,14 @@
 #define TEMP_LIMIT 80.0
 #define PRESSURE_LIMIT 10.0
 
+typedef int (*BackendInitFn)(void);
+typedef int (*BackendReadFn)(SensorReading *);
+typedef const char *(*BackendNameFn)(void);
+
+static BackendInitFn backend_init_fn;
+static BackendReadFn backend_read_fn;
+static BackendNameFn backend_name_fn;
+
 static long long current_timestamp_ms(void)
 {
     struct timespec ts;
@@ -89,7 +97,7 @@ static int publish_telemetry(
         "  \"motor_rpm\": %d\n"
         "}\n",
         timestamp,
-        sensor_backend_name(),
+        backend_name_fn(),
         reading->temperature_c,
         reading->pressure_bar,
         reading->vibration_mm_s,
@@ -132,20 +140,36 @@ int main(void)
         return EXIT_FAILURE;
     }
 
-    if (sensor_backend_init() != 0) {
-        fprintf(stderr, "Sensor backend initialization failed\n");
+    const char *requested_backend = getenv("SENTINEL_EDGE_BACKEND");
+
+    if (requested_backend == NULL || requested_backend[0] == '\0' ||
+        strcmp(requested_backend, "simulation") == 0) {
+        backend_init_fn = sensor_backend_init;
+        backend_read_fn = sensor_backend_read;
+        backend_name_fn = sensor_backend_name;
+    } else if (strcmp(requested_backend, "modbus") == 0) {
+        backend_init_fn = modbus_backend_init;
+        backend_read_fn = modbus_backend_read;
+        backend_name_fn = modbus_backend_name;
+    } else {
+        fprintf(stderr, "Unsupported backend: %s\n", requested_backend);
+        return EXIT_FAILURE;
+    }
+
+    if (backend_init_fn() != 0) {
+        perror("Sensor backend initialization failed");
         return EXIT_FAILURE;
     }
 
     printf("SentinelEdge Industrial Data Acquisition\n");
-    printf("Source: %s\n", sensor_backend_name());
+    printf("Backend: %s\n", backend_name_fn());
     printf("Output: %s\n", output_path);
     printf("Publishing interval: 2 seconds\n");
 
     while (1) {
         SensorReading reading;
 
-        if (sensor_backend_read(&reading) != 0) {
+        if (backend_read_fn(&reading) != 0) {
             perror("Sensor acquisition failed");
             sleep(2);
             continue;

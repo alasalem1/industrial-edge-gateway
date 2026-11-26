@@ -2,9 +2,12 @@ SUMMARY = "SentinelEdge Industrial Data Acquisition"
 DESCRIPTION = "Modular industrial telemetry acquisition and JSON publishing service"
 LICENSE = "CLOSED"
 
+DEPENDS = "libmodbus"
+
 SRC_URI = "file://industrial-data-acquisition.c \
            file://sensor_backend.h \
            file://sensor_backend_simulation.c \
+           file://sensor_backend_modbus.c \
            file://industrial-data-acquisition.service \
 "
 
@@ -20,6 +23,8 @@ do_compile() {
         -I${WORKDIR} \
         ${WORKDIR}/industrial-data-acquisition.c \
         ${WORKDIR}/sensor_backend_simulation.c \
+        ${WORKDIR}/sensor_backend_modbus.c \
+        -lmodbus \
         -o industrial-data-acquisition
 }
 

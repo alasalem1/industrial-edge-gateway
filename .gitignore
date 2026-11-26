@@ -37,3 +37,7 @@
 /meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.before-*
 /meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.pre-*
 /meta-sentinel-edge/recipes-apps/sentinel-edge-ui/files/qml/*.theme-backup
+
+# Python-generated files
+__pycache__/
+*.py[cod]

@@ -218,13 +218,15 @@ for QEMU fault-injection results and model limitations.
 | C acquisition service | Implemented |
 | Modular sensor backend interface | Implemented |
 | Simulation sensor backend | Implemented |
+| Modbus TCP backend (libmodbus) | Implemented and tested with software PLC simulator |
 | JSON telemetry pipeline | Implemented |
 | C++ system monitoring | Implemented |
 | Telemetry validation | Implemented |
 | C rule-based diagnostic engine | Implemented and tested |
 | Qt 6/QML dashboard | Implemented |
 | QEMU integration | Tested |
-| Physical sensor integration | Planned |
+| Software PLC simulator integration | Tested in QEMU |
+| Physical PLC and sensor integration | Not yet validated |
 | Native C AI anomaly inference | Implemented and tested (QEMU) |
 
 ## Rule-based diagnostic thresholds
@@ -285,3 +287,76 @@ SentinelEdge explores the development of a complete embedded Linux edge platform
 ## Persistent fault management
 
 The Qt application records fault events in `/var/lib/sentinel-edge/fault-history.json`. The fault manager tracks active and cleared states, acknowledgement status, and event timestamps. QEMU validation covered all four simulated fault profiles and recovery to normal measurements.
+
+
+## Modbus TCP integration
+
+SentinelEdge includes a runtime-selectable Modbus TCP acquisition backend
+implemented in C using libmodbus.
+
+The backend reads four consecutive holding registers and converts them into
+the existing telemetry JSON format.
+
+### Data flow
+
+Software PLC Simulator
+    -> Modbus TCP
+    -> C Modbus Backend (libmodbus)
+    -> Industrial Data Acquisition Service
+    -> /run/sentinel-edge/telemetry.json
+    -> C++ TelemetryMonitor
+    -> Qt 6 / QML Dashboard
+
+### Backend configuration
+
+The default backend is simulation. Select Modbus using:
+
+    SENTINEL_EDGE_BACKEND=modbus
+
+Connection settings:
+
+| Environment variable | Default | Description |
+|---|---|---|
+| SENTINEL_EDGE_MODBUS_HOST | 127.0.0.1 | Modbus TCP server |
+| SENTINEL_EDGE_MODBUS_PORT | 502 | TCP port |
+| SENTINEL_EDGE_MODBUS_UNIT_ID | 1 | Modbus unit identifier |
+
+### Holding-register map
+
+| Register | Measurement | Conversion |
+|---:|---|---|
+| 0 | Temperature | Value / 10 = °C |
+| 1 | Pressure | Value / 10 = bar |
+| 2 | Vibration | Value / 10 = mm/s |
+| 3 | Motor speed | Value = RPM |
+
+This is the SentinelEdge demonstration register map, not a universal
+industrial standard. Actual PLC integrations may need different addresses
+and scaling.
+
+### Software PLC simulator
+
+Run the included simulator:
+
+    python3 tools/modbus_plc_simulator.py
+
+It listens on TCP port 1502 and supplies:
+
+| Measurement | Simulated value |
+|---|---:|
+| Temperature | 42.5 °C |
+| Pressure | 4.9 bar |
+| Vibration | 1.5 mm/s |
+| Motor speed | 1262 RPM |
+
+### QEMU validation
+
+The Modbus backend was built into the Yocto image and tested in QEMU against
+the software PLC simulator.
+
+Validation confirmed Modbus TCP communication, correct register conversion,
+continuous telemetry publication, MODBUS-TCP source identification, and
+live display of measurements in the Qt dashboard.
+
+Validation used QEMU and a software PLC simulator. No physical PLC,
+industrial network, or production machine validation is claimed.

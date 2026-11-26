@@ -12,4 +12,8 @@ int sensor_backend_init(void);
 int sensor_backend_read(SensorReading *reading);
 const char *sensor_backend_name(void);
 
+int modbus_backend_init(void);
+int modbus_backend_read(SensorReading *reading);
+const char *modbus_backend_name(void);
+
 #endif
