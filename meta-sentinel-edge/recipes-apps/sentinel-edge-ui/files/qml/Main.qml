@@ -1018,21 +1018,25 @@ ApplicationWindow {
                                 spacing: 10
 
                                 Text {
-                                    text: "TELEMETRY ACQUISITION"
+                                    text: "TELEMETRY SOURCE"
                                     color: mutedColor
                                     font.pixelSize: 9
                                     font.bold: true
                                 }
 
                                 Text {
-                                    text: "No sensor data available"
-                                    color: warningColor
+                                    text: telemetryMonitor.connected
+                                          ? "LIVE SIMULATED TELEMETRY"
+                                          : "WAITING FOR TELEMETRY"
+                                    color: telemetryMonitor.connected ? textColor : warningColor
                                     font.pixelSize: 17
                                     font.bold: true
                                 }
 
                                 Text {
-                                    text: "The machine acquisition component has not yet been connected to the dashboard."
+                                    text: telemetryMonitor.connected
+                                          ? "Receiving fresh measurements from " + telemetryMonitor.source
+                                          : "No fresh telemetry available. Check the acquisition service."
                                     color: mutedColor
                                     font.pixelSize: 10
                                     wrapMode: Text.WordWrap
@@ -1042,7 +1046,7 @@ ApplicationWindow {
                         }
 
                         Repeater {
-                            model: ["Temperature", "Vibration", "Motor speed", "Electrical current"]
+                            model: ["Temperature", "Pressure", "Vibration", "Motor speed"]
 
                             delegate: Rectangle {
                                 Layout.fillWidth: true
@@ -1067,8 +1071,19 @@ ApplicationWindow {
                                     }
 
                                     Text {
-                                        text: "NO DATA"
-                                        color: warningColor
+                                        text: {
+                                            if (!telemetryMonitor.connected)
+                                                return "NO DATA"
+
+                                            switch (index) {
+                                            case 0: return telemetryMonitor.temperature.toFixed(1) + " °C"
+                                            case 1: return telemetryMonitor.pressure.toFixed(1) + " bar"
+                                            case 2: return telemetryMonitor.vibration.toFixed(1) + " mm/s"
+                                            case 3: return telemetryMonitor.motorRpm + " RPM"
+                                            default: return "NO DATA"
+                                            }
+                                        }
+                                        color: telemetryMonitor.connected ? textColor : warningColor
                                         font.pixelSize: 10
                                         font.bold: true
                                     }
@@ -1520,14 +1535,88 @@ ApplicationWindow {
                         }
 
                         Text {
-                            text: "Model integrity, deployment and lifecycle"
+                            text: "Embedded AI model configuration and runtime status"
                             color: mutedColor
                             font.pixelSize: 10
                         }
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 145
+                            Layout.preferredHeight: 160
+                            radius: 7
+                            color: panelColor
+                            border.color: borderColor
+
+                            ColumnLayout {
+                                anchors.fill: parent
+                                anchors.margins: 15
+                                spacing: 8
+
+                                Text {
+                                    text: "ACTIVE MODEL"
+                                    color: mutedColor
+                                    font.pixelSize: 9
+                                    font.bold: true
+                                }
+
+                                Text {
+                                    text: "Embedded Isolation Forest"
+                                    color: textColor
+                                    font.pixelSize: 17
+                                    font.bold: true
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: "INFERENCE STATUS"
+                                        color: mutedColor
+                                        font.pixelSize: 9
+                                        font.bold: true
+                                    }
+
+                                    Item {
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Text {
+                                        text: telemetryMonitor.aiStatus
+                                        color: telemetryMonitor.aiStatus === "NORMAL"
+                                               ? goodStatusColor
+                                               : telemetryMonitor.aiStatus === "ANOMALY"
+                                                 ? dangerColor
+                                                 : warningColor
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                    }
+                                }
+
+                                Text {
+                                    text: telemetryMonitor.aiStatus === "UNKNOWN"
+                                          ? "Waiting for valid telemetry before running inference."
+                                          : telemetryMonitor.aiSummary
+                                    color: mutedColor
+                                    font.pixelSize: 9
+                                    wrapMode: Text.WordWrap
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: telemetryMonitor.aiStatus === "UNKNOWN"
+                                          ? "LATEST SCORE  /  NOT AVAILABLE"
+                                          : "LATEST ANOMALY SCORE  /  " +
+                                            telemetryMonitor.aiAnomalyScore.toFixed(4)
+                                    color: mutedColor
+                                    font.pixelSize: 9
+                                    font.bold: true
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 135
                             radius: 7
                             color: panelColor
                             border.color: borderColor
@@ -1538,32 +1627,93 @@ ApplicationWindow {
                                 spacing: 9
 
                                 Text {
-                                    text: "ACTIVE MODEL"
+                                    text: "MODEL CONFIGURATION"
                                     color: mutedColor
                                     font.pixelSize: 9
                                     font.bold: true
                                 }
 
-                                Text {
-                                    text: "No model loaded"
-                                    color: warningColor
-                                    font.pixelSize: 17
-                                    font.bold: true
-                                }
-
-                                Text {
-                                    text: "Model deployment and verification will be available after the AI runtime and model lifecycle components are integrated."
-                                    color: mutedColor
-                                    font.pixelSize: 9
-                                    wrapMode: Text.WordWrap
+                                RowLayout {
                                     Layout.fillWidth: true
+
+                                    Text {
+                                        text: "Algorithm"
+                                        color: mutedColor
+                                        font.pixelSize: 10
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: "Isolation Forest"
+                                        color: textColor
+                                        font.pixelSize: 10
+                                        font.bold: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: "Number of trees"
+                                        color: mutedColor
+                                        font.pixelSize: 10
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: "128"
+                                        color: textColor
+                                        font.pixelSize: 10
+                                        font.bold: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: "Maximum samples"
+                                        color: mutedColor
+                                        font.pixelSize: 10
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: "256"
+                                        color: textColor
+                                        font.pixelSize: 10
+                                        font.bold: true
+                                    }
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+
+                                    Text {
+                                        text: "Anomaly threshold"
+                                        color: mutedColor
+                                        font.pixelSize: 10
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    Text {
+                                        text: "-0.604171951"
+                                        color: textColor
+                                        font.pixelSize: 10
+                                        font.bold: true
+                                    }
                                 }
                             }
                         }
 
                         Rectangle {
                             Layout.fillWidth: true
-                            Layout.preferredHeight: 95
+                            Layout.preferredHeight: 105
                             radius: 7
                             color: panelColor
                             border.color: borderColor
@@ -1571,26 +1721,28 @@ ApplicationWindow {
                             ColumnLayout {
                                 anchors.fill: parent
                                 anchors.margins: 15
-                                spacing: 6
+                                spacing: 7
 
                                 Text {
-                                    text: "MODEL INTEGRITY"
+                                    text: "MODEL INTEGRATION"
                                     color: mutedColor
                                     font.pixelSize: 9
                                     font.bold: true
                                 }
 
                                 Text {
-                                    text: "Verification not available"
-                                    color: textColor
+                                    text: "BUILT INTO APPLICATION"
+                                    color: goodStatusColor
                                     font.pixelSize: 12
                                     font.bold: true
                                 }
 
                                 Text {
-                                    text: "No model artifact has been deployed."
+                                    text: "The model is compiled into the native C application. No separate model artifact or cryptographic signature-verification workflow is configured."
                                     color: mutedColor
                                     font.pixelSize: 9
+                                    wrapMode: Text.WordWrap
+                                    Layout.fillWidth: true
                                 }
                             }
                         }
