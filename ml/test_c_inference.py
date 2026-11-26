@@ -1,4 +1,5 @@
 import ctypes
+import os
 import numpy as np
 from sklearn.ensemble import IsolationForest
 
@@ -50,7 +51,11 @@ faults.append(np.column_stack([
 
 X = np.vstack([holdout] + faults)
 
-lib = ctypes.CDLL("/tmp/libsentinel_ai.so")
+library_path = os.environ.get(
+    "SENTINEL_AI_LIBRARY",
+    "/tmp/libsentinel_ai.so"
+)
+lib = ctypes.CDLL(library_path)
 predict = lib.sentinel_ai_predict
 predict.argtypes = [
     ctypes.POINTER(ctypes.c_double),

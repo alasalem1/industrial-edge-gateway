@@ -1,6 +1,6 @@
 # SentinelEdge — Industrial Edge Monitoring Platform
 SentinelEdge is an embedded Linux industrial edge monitoring platform built with the Yocto Project.
-It combines a custom Linux distribution, a C-based telemetry acquisition service, a C++ system monitoring layer, a deterministic C rule-based diagnostic engine, and a Qt 6/QML operations dashboard.
+It combines a custom Linux distribution, a C-based telemetry acquisition service, a C++ system monitoring layer, a deterministic C rule-based diagnostic engine, a native C Isolation Forest anomaly detector, and a Qt 6/QML operations dashboard.
 **Technology stack:** Yocto Scarthgap · KAS · BitBake · C · C++ · Qt 6 · QML · systemd
 ## Project overview
 SentinelEdge runs as a custom Yocto Linux image targeting QEMU x86-64.
@@ -11,8 +11,10 @@ SentinelEdge runs as a custom Yocto Linux image targeting QEMU x86-64.
 - Qt 6/QML operations dashboard.
 - Telemetry range and freshness validation.
 - Deterministic C diagnostic engine with NORMAL, WARNING, and CRITICAL severity levels.
+- Native C Isolation Forest inference using temperature, pressure, vibration, and motor RPM.
+- AI anomaly status and score displayed in the Qt/QML dashboard.
 **Hardware status:** Industrial measurements are simulated; no physical sensors are connected.
-**Diagnostics status:** A deterministic C rule-based engine evaluates temperature, pressure, vibration, and motor speed. No AI/ML inference model is implemented.
+**Diagnostics status:** Deterministic C rule-based diagnostics and native C Isolation Forest anomaly inference are implemented and tested using simulated telemetry.
 ## Architecture
 The platform separates sensor acquisition from telemetry publishing through a modular C backend interface. The current QEMU implementation uses a simulated sensor backend. Published JSON telemetry is consumed by the C++ monitoring layer and Qt 6/QML dashboard.
 
@@ -169,6 +171,42 @@ The platform has been built and tested in the QEMU x86-64 environment.
 
 
 
+
+- Native C Isolation Forest inference integrated with the Qt 6/QML dashboard.
+- Automated C/Python inference parity test using 1,600 samples.
+
+### AI inference regression test
+
+Install the pinned Python test dependencies:
+
+```bash
+python3 -m venv "$HOME/sentinel-edge-ml-venv"
+"$HOME/sentinel-edge-ml-venv/bin/python" -m pip install -r ml/requirements-test.txt
+```
+
+Run the automated test:
+
+```bash
+./ml/run_c_inference_test.sh
+```
+
+The script compiles the native C inference library into a temporary file,
+runs the Python/C parity test, and removes the temporary library afterward.
+
+**Latest parity results:**
+
+| Metric | Result |
+|---|---:|
+| Test samples | 1,600 |
+| Maximum score difference | 1.11e-16 |
+| Mean score difference | 3.54e-18 |
+| Classification mismatches | 0 |
+| Result | PASS |
+
+See [AI anomaly detection validation](docs/AI_ANOMALY_VALIDATION.md)
+for QEMU fault-injection results and model limitations.
+
+
 ## Development status
 
 
@@ -187,7 +225,7 @@ The platform has been built and tested in the QEMU x86-64 environment.
 | Qt 6/QML dashboard | Implemented |
 | QEMU integration | Tested |
 | Physical sensor integration | Planned |
-| AI/ML inference integration | Planned |
+| Native C AI anomaly inference | Implemented and tested (QEMU) |
 
 ## Rule-based diagnostic thresholds
 
@@ -222,7 +260,9 @@ The suite covers normal operation, all warning and critical threshold boundaries
 
 - Industrial measurements are simulated; physical sensor integration has not been performed.
 
-- Diagnostics currently use deterministic threshold-based C rules; AI/ML inference is not implemented.
+- AI anomaly inference uses a prototype Isolation Forest model trained and evaluated with synthetic data.
+- Some individual simulated fault scenarios, including the tested temperature and pressure profiles, did not cross the model anomaly threshold.
+- The AI model has not been validated with physical industrial sensors or real-world machinery.
 
 - Validation has been performed in QEMU, not on physical industrial hardware.
 
